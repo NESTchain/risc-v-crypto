@@ -1,44 +1,35 @@
-# trezor-crypto
+# risc-v-crypto
 
-[![Build Status](https://travis-ci.org/trezor/trezor-crypto.svg?branch=master)](https://travis-ci.org/trezor/trezor-crypto) [![gitter](https://badges.gitter.im/trezor/community.svg)](https://gitter.im/trezor/community)
+Author: μNEST dev team, http://iotee.io
 
-Heavily optimized cryptography algorithms for embedded devices.
+This repo is forked from https://github.com/trezor/trezor-crypto.
 
-These include:
-- AES/Rijndael encryption/decryption
-- Big Number (256 bit) Arithmetics
-- BIP32 Hierarchical Deterministic Wallets
-- BIP39 Mnemonic code
-- ECDSA signing/verifying (supports secp256k1 and nist256p1 curves,
-  uses RFC6979 for deterministic signatures)
-- ECDSA public key derivation
-- Base32 (RFC4648 and custom alphabets)
-- Base58 address representation
-- Ed25519 signing/verifying (also SHA3 and Keccak variants)
-- ECDH using secp256k1, nist256p1 and Curve25519
-- HMAC-SHA256 and HMAC-SHA512
-- PBKDF2
-- RIPEMD-160
-- SHA1
-- SHA2-256/SHA2-512
-- SHA3/Keccak
-- BLAKE2s/BLAKE2b
-- Chacha20-Poly1305
-- unit tests (using Check - check.sf.net; in test_check.c)
-- tests against OpenSSL (in test_openssl.c)
-- integrated Wycheproof tests
+Take the following steps to cross-compile it for RISC-V platform. We will take the "secp256k1" part of this crypto library as an example. The cross-compiling platform is Ubuntu 16.04/18.04 x64.
 
-Distibuted under MIT License.
+## Install RISC-V GNU toolchain
 
-## Some parts of the library come from external sources:
+Install the toolchain to ~/opt/riscv.
 
-- AES: https://github.com/BrianGladman/aes
-- Base58: https://github.com/luke-jr/libbase58
-- BLAKE2s/BLAKE2b: https://github.com/BLAKE2/BLAKE2
-- RIPEMD-160: https://github.com/ARMmbed/mbedtls
-- SHA1/SHA2: http://www.aarongifford.com/computers/sha.html
-- SHA3: https://github.com/rhash/RHash
-- Curve25519: https://github.com/agl/curve25519-donna
-- Ed25519: https://github.com/floodyberry/ed25519-donna
-- Chacha20: https://github.com/wg/c20p1305
-- Poly1305: https://github.com/floodyberry/poly1305-donna
+```
+sudo apt-get install -y autoconf automake autotools-dev curl libmpc-dev libmpfr-dev \
+	libgmp-dev libusb-1.0-0-dev gawk build-essential bison flex texinfo gperf libtool \
+	patchutils bc zlib1g-dev device-tree-compiler pkg-config libexpat-dev
+cd ~ && git clone --recursive https://github.com/riscv/riscv-tools
+export RISCV=~/opt/riscv
+cd ~/riscv-tools && ./build.sh
+```
+
+## Cross-compiling the demo program for RISC-V
+
+```
+cd ~ && git clone --recursive https://github.com/NESTchain/risc-v-crypto
+export PATH=~/opt/riscv/bin:$PATH
+make
+```
+
+## Run the secp256k1 demo program in RISC-V emulator
+
+```
+spike pk ./demo
+```
+

@@ -1,16 +1,12 @@
-CC       ?= gcc
+CC       ?= riscv64-unknown-elf-gcc
 
 OPTFLAGS ?= -O3 -g
 
 CFLAGS   += $(OPTFLAGS) \
-            -std=gnu99 \
             -W \
             -Wall \
             -Wextra \
-            -Wimplicit-function-declaration \
             -Wredundant-decls \
-            -Wstrict-prototypes \
-            -Wundef \
             -Wshadow \
             -Wpointer-arith \
             -Wformat \
@@ -23,10 +19,8 @@ CFLAGS   += $(OPTFLAGS) \
             -Wformat-security \
             -Werror
 
-VALGRIND ?= 1
 
 CFLAGS += -I.
-CFLAGS += -DVALGRIND=$(VALGRIND)
 CFLAGS += -DUSE_ETHEREUM=1
 CFLAGS += -DUSE_GRAPHENE=1
 CFLAGS += -DUSE_KECCAK=1
@@ -66,45 +60,16 @@ SRCS  += memzero.c
 
 OBJS   = $(SRCS:.c=.o)
 
-TESTLIBS = $(shell pkg-config --libs check) -lpthread -lm
-TESTSSLLIBS = $(shell pkg-config --libs openssl)
+all: demo
 
-all: tools tests
+demo: demo.c $(SRCS)
+	riscv64-unknown-elf-gcc $(CFLAGS) demo.c $(SRCS) -o demo
 
-%.o: %.c %.h options.h
-	$(CC) $(CFLAGS) -o $@ -c $<
+libtrezor-crypto.a: $(OBJS)
+	riscv64-unknown-elf-ar rcs $@ $^
 
-tests: tests/test_check tests/test_openssl tests/test_speed tests/libtrezor-crypto.so tests/aestst
-
-tests/aestst: aes/aestst.o aes/aescrypt.o aes/aeskey.o aes/aestab.o
-	$(CC) $^ -o $@
-
-tests/test_check.o: tests/test_check_cardano.h tests/test_check_monero.h tests/test_check_cashaddr.h tests/test_check_segwit.h
-
-tests/test_check: tests/test_check.o $(OBJS)
-	$(CC) tests/test_check.o $(OBJS) $(TESTLIBS) -o tests/test_check
-
-tests/test_speed: tests/test_speed.o $(OBJS)
-	$(CC) tests/test_speed.o $(OBJS) -o tests/test_speed
-
-tests/test_openssl: tests/test_openssl.o $(OBJS)
-	$(CC) tests/test_openssl.o $(OBJS) $(TESTSSLLIBS) -o tests/test_openssl
-
-tests/libtrezor-crypto.so: $(SRCS)
-	$(CC) $(CFLAGS) -DAES_128 -DAES_192 -fPIC -shared $(SRCS) -o tests/libtrezor-crypto.so
-
-tools: tools/xpubaddrgen tools/mktable tools/bip39bruteforce
-
-tools/xpubaddrgen: tools/xpubaddrgen.o $(OBJS)
-	$(CC) tools/xpubaddrgen.o $(OBJS) -o tools/xpubaddrgen
-
-tools/mktable: tools/mktable.o $(OBJS)
-	$(CC) tools/mktable.o $(OBJS) -o tools/mktable
-
-tools/bip39bruteforce: tools/bip39bruteforce.o $(OBJS)
-	$(CC) tools/bip39bruteforce.o $(OBJS) -o tools/bip39bruteforce
+%.o: %.c
+	$(CC) $(CFLAGS) -DAES_128 -DAES_192 -fPIC -o $@ -c $<
 
 clean:
-	rm -f *.o aes/*.o chacha20poly1305/*.o ed25519-donna/*.o
-	rm -f tests/test_check tests/test_speed tests/test_openssl tests/libtrezor-crypto.so tests/aestst
-	rm -f tools/*.o tools/xpubaddrgen tools/mktable tools/bip39bruteforce
+	rm -rf demo libtrezor-crypto.a *.o
